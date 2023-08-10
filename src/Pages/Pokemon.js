@@ -16,48 +16,39 @@ function Pokemon() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [selectedPokemon, setSelectedPokemon] = useState([]);
-  const [loadMoreVisible, setLoadMoreVisible] = useState(true);
+  const [loadMoreValue, setLoadMoreValue] = useState("Load More");
+  
 
-  // Fungsi untuk mengambil data pokemon dari API
-  const GetPokemon = async (newPage) => {
-    try {
-      setLoading(true);
-      const response = await axios.get(
-        `https://pokeapi.co/api/v2/pokemon/?offset=${
-          (newPage - 1) * 10
-        }&limit=10`
-      );
+  const fetchPokemon = async (newPage) => {
+  try {
+    setLoading(true);
+    const response = await axios.get(
+      `https://pokeapi.co/api/v2/pokemon/?offset=${(newPage - 1) * 10}&limit=10`
+    );
 
-      const newPokemonList = [
-        ...pokemonList,
-        ...response.data.results,
-        "Load More",
-      ];
-      setPokemonList(newPokemonList);
-      setLoading(false);
-      if (response.data.results.length < 10) {
-        setLoadMoreVisible(false);
-      }
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      setLoading(false);
-    }
-  };
+    const newPokemonList = [...pokemonList, ...response.data.results, "Load More"];
+    setPokemonList(newPokemonList);
+    setLoading(false);
 
-  // Memanggil GetPokemon() saat komponen pertama kali di-mount
-  useEffect(() => {
-    GetPokemon(page);
-  }, [page]);
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    setLoading(false);
+  }
+};
 
-  // Fungsi untuk menangani tombol "Load More"
-  const handleLoadMore = () => {
-    setLoadMoreVisible(false);
+useEffect(() => {
+  fetchPokemon(page);
+}, []); 
+
+  const handleLoadMore = async () => {
+    setLoadMoreValue("Loading...");
     const newPage = page + 1;
-    GetPokemon(newPage);
+    await fetchPokemon(newPage);
     setPage(newPage);
+    setLoadMoreValue("Load More");
   };
 
-  // Fungsi untuk mengambil data yang bervalue name
+
   const getOptionLabel = (option) => option.name;
 
   return (
@@ -100,7 +91,6 @@ function Pokemon() {
                 renderOption={(props, option) => (
                   <div>
                     <li {...props}>{getOptionLabel(option)}</li>
-
                     {option === "Load More" && (
                       <Button
                         fullWidth={true}
@@ -112,18 +102,13 @@ function Pokemon() {
                           color: "black",
                         }}
                       >
-                        Load More
+                        <span style={{ textTransform: "uppercase" }}>
+                          {loadMoreValue}
+                        </span>
                       </Button>
                     )}
                   </div>
                 )}
-                renderTags={(tagValue, getTagProps) =>
-                  tagValue.map((option, index) => (
-                    <li {...getTagProps({ index })}>
-                      {getOptionLabel(option)}
-                    </li>
-                  ))
-                }
               />
             </FormControl>
           </Paper>
@@ -134,3 +119,4 @@ function Pokemon() {
 }
 
 export default Pokemon;
+	
