@@ -6,40 +6,45 @@ import {
   Grid,
   Paper,
   Typography,
-  CircularProgress,
   FormControl,
 } from "@mui/material";
 import axios from "axios";
 
 function Pokemon() {
+  // menyimpan dan merubah data dengan state
   const [pokemonList, setPokemonList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [selectedPokemon, setSelectedPokemon] = useState([]);
   const [loadMoreValue, setLoadMoreValue] = useState("Load More");
-  
 
+  // Berfungsi untuk mengambil data Pokemon dari API berdasarkan nomor halaman
   const fetchPokemon = async (newPage) => {
-  try {
-    setLoading(true);
-    const response = await axios.get(
-      `https://pokeapi.co/api/v2/pokemon/?offset=${(newPage - 1) * 10}&limit=10`
-    );
+    try {
+      setLoading(true);
+      const response = await axios.get(
+        `https://pokeapi.co/api/v2/pokemon/?offset=${
+          (newPage - 1) * 10
+        }&limit=10`
+      );
 
-    const newPokemonList = [...pokemonList, ...response.data.results, "Load More"];
-    setPokemonList(newPokemonList);
-    setLoading(false);
+      let newPokemonList = [...pokemonList, ...response.data.results];
+      console.log(...pokemonList);
 
-  } catch (error) {
-    console.error("Error fetching data:", error);
-    setLoading(false);
-  }
-};
+      // Tambahkan "Load More" hanya jika belum ada dalam daftar
+      if (!pokemonList.includes("Load More")) {
+        newPokemonList.push("Load More");
+      }
 
-useEffect(() => {
-  fetchPokemon(page);
-}, []); 
+      setPokemonList(newPokemonList);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      setLoading(false);
+    }
+  };
 
+  // Berfungsi untuk menangani klik tombol "Load More".
   const handleLoadMore = async () => {
     setLoadMoreValue("Loading...");
     const newPage = page + 1;
@@ -48,8 +53,17 @@ useEffect(() => {
     setLoadMoreValue("Load More");
   };
 
+  // Berfungsi untuk menyesuaikan bagaimana opsi ditampilkan di komponen Pelengkapan Otomatis
+  const getOptionLabel = (option) => {
+    if (typeof option === "Load More") {
+      return option; // Mengembalikan String secara langsung
+    }
+    return option.name; // Mengembalikan properti nama untuk opsi Pokemon lainnya
+  };
 
-  const getOptionLabel = (option) => option.name;
+  useEffect(() => {
+    fetchPokemon(page);
+  }, []);
 
   return (
     <div>
@@ -70,46 +84,57 @@ useEffect(() => {
               Selected Pokemon
             </Typography>
             <FormControl fullWidth={true}>
-              <Autocomplete
-                id="pokemon-autocomplete"
-                options={pokemonList}
-                getOptionLabel={getOptionLabel}
-                loading={loading}
-                multiple
-                value={selectedPokemon}
-                onChange={(event, newValue) => {
-                  setSelectedPokemon(newValue);
-                }}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Select Pokemon"
-                    variant="outlined"
-                    margin="dense"
-                  />
-                )}
-                renderOption={(props, option) => (
-                  <div>
-                    <li {...props}>{getOptionLabel(option)}</li>
-                    {option === "Load More" && (
-                      <Button
-                        fullWidth={true}
-                        onClick={handleLoadMore}
-                        disabled={loading}
-                        style={{
-                          textTransform: "none",
-                          fontWeight: "bold",
-                          color: "black",
-                        }}
-                      >
-                        <span style={{ textTransform: "uppercase" }}>
-                          {loadMoreValue}
-                        </span>
-                      </Button>
-                    )}
-                  </div>
-                )}
-              />
+              <div style={{ position: "relative" }}>
+                <Autocomplete
+                  id="pokemon-autocomplete"
+                  options={pokemonList}
+                  getOptionLabel={getOptionLabel}
+                  loading={loading}
+                  multiple
+                  value={selectedPokemon}
+                  onChange={(event, newValue) => {
+                    setSelectedPokemon(newValue);
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Select Pokemon"
+                      variant="outlined"
+                      margin="dense"
+                    />
+                  )}
+                  // option pada Autocomplete
+                  renderOption={(props, option) => (
+                    <div>
+                      <li {...props}>{getOptionLabel(option)}</li>
+                      {option === "Load More" && (
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "center",
+                            marginTop: "16px",
+                          }}
+                        >
+                          {/* tombol button untuk menambahkan 10 data baru */}
+                          <Button
+                            fullWidth={true}
+                            onClick={handleLoadMore}
+                            disabled={loading}
+                            style={{
+                              fontWeight: "bold",
+                              color: "black",
+                            }}
+                          >
+                            <span style={{ textTransform: "uppercase" }}>
+                              {loadMoreValue}
+                            </span>
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                />
+              </div>
             </FormControl>
           </Paper>
         </Grid>
@@ -119,4 +144,3 @@ useEffect(() => {
 }
 
 export default Pokemon;
-	
